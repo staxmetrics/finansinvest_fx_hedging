@@ -64,8 +64,7 @@ def main():
     invariant_dist = dict()  # keys as (hedged_fx_return, equity_fx_corr) tuples
     for hedged_fx_return in config.param_grid['hedged_fx_return']:
 
-        for equity_fx_corr, rates_fx_corr in zip(config.param_grid['equity_fx_corr'],
-                                                 config.param_grid['rates_fx_corr']):
+        for equity_fx_corr in config.param_grid['equity_fx_corr']:
 
             # getting base assumptions
             true_mean_invariant = config.mean.copy()
@@ -84,10 +83,6 @@ def main():
             # updating the correlation matrix based on the parameter grid
             corr_invariant[config.us_eq_rd_ix, config.usddkk_rd_ix] = equity_fx_corr
             corr_invariant[config.usddkk_rd_ix, config.us_eq_rd_ix] = equity_fx_corr
-            corr_invariant[config.us_10y_rd_ix, config.usddkk_rd_ix] = rates_fx_corr
-            corr_invariant[config.usddkk_rd_ix, config.us_10y_rd_ix] = rates_fx_corr
-            corr_invariant[config.us_9y_rd_ix, config.usddkk_rd_ix] = rates_fx_corr
-            corr_invariant[config.usddkk_rd_ix, config.us_9y_rd_ix] = rates_fx_corr
 
             # computing the covariance matrix for the updated DGP
             true_cov_invariant = np.diag(vol_invariant) @ corr_invariant @ np.diag(vol_invariant)
