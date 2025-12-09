@@ -379,19 +379,21 @@ def calculate_max_utility_asset_hedges(mean_pnl: np.ndarray,
     for i in range(n):
         if i in fx_sensitive_cash_assets:
 
+            h_asset = 1 / prices[i] # holding of one unit of the cash asset
             h_fwd = cp.Variable()
             # Quadratic utility: maximize expected return minus risk penalty
 
-            utility = mean_pnl[i] + h_fwd * mean_pnl[hedge_index] - 0.5 * risk_aversion * (
-                    cov_mat_pnl[i, i] + h_fwd ** 2 * cov_mat_pnl[hedge_index, hedge_index] + 2 * h_fwd * cov_mat_pnl[i, hedge_index]
+            utility = h_asset * mean_pnl[i] + h_fwd * mean_pnl[hedge_index] - 0.5 * risk_aversion * (
+                    h_asset ** 2 * cov_mat_pnl[i, i] + h_fwd ** 2 * cov_mat_pnl[hedge_index, hedge_index]
+                    + 2 * h_asset * h_fwd * cov_mat_pnl[i, hedge_index]
             )
 
-            constraints = [h_fwd * fx_delta_hedge <= -min_hedge_ratio * prices[i],
-                           h_fwd * fx_delta_hedge >= -max_hedge_ratio * prices[i]]
+            constraints = [h_fwd * fx_delta_hedge <= -min_hedge_ratio,
+                           h_fwd * fx_delta_hedge >= -max_hedge_ratio]
 
             problem = cp.Problem(cp.Maximize(utility), constraints)
             problem.solve(solver=solver, max_iters=MAXITER, eps=EPS, verbose=VERBOSE)
-            optimal_hedge_ratios.append(-h_fwd.value * fx_delta_hedge / prices[i])
+            optimal_hedge_ratios.append(-h_fwd.value * fx_delta_hedge)
 
         else:
             optimal_hedge_ratios.append(0.0)
